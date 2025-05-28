@@ -1,0 +1,177 @@
+"""
+Class-based command-line interface for chart_gizmo.
+Provides flexible CSV chart creation from the command line.
+"""
+import argparse
+import csv
+import os
+import sys
+
+from H5Gizmos import serve
+
+
+class ChartCLI:
+    """
+    Base class for chart command-line interfaces.
+
+    This class handles argument parsing and chart display,
+    while subclasses handle specific data loading.
+    """
+
+    def __init__(self, chart_cls, description=None):
+        """
+        Initialize a CLI for the given chart class.
+
+        Parameters
+        ----------
+        chart_cls : class
+            The chart class to create (e.g., CSVBarChart, CSVLineChart)
+        description : str, optional
+            Custom description for the CLI
+        """
+        self.chart_cls = chart_cls
+        self.description = description or f"Create a {chart_cls.__name__}"
+        self.parser = self._create_parser()
+
+    def _create_parser(self) -> argparse.ArgumentParser:
+        """
+        Create the argument parser with common chart options.
+
+        Returns
+        -------
+        argparse.ArgumentParser
+            Configured argument parser
+        """
+        parser = argparse.ArgumentParser(description=self.description)
+        self._add_common_arguments(parser)
+        return parser
+
+    def _add_common_arguments(self, parser: argparse.ArgumentParser) -> None:
+        """
+        Add arguments common to all chart types.
+
+        Parameters
+        ----------
+        parser : argparse.ArgumentParser
+            Parser to add arguments to
+        """
+        parser.add_argument("-w", "--width", type=int, default=400,
+                           help="Chart width in pixels")
+        parser.add_argument("-H", "--height", type=int, default=400,
+                           help="Chart height in pixels")
+        parser.add_argument("-s", "--stacked", action="store_true",
+                           help="Create a stacked chart")
+        parser.add_argument("--log", action="store_true",
+                           help="Use logarithmic scale for y-axis")
+
+    def parse_args(self, args=None):
+        """
+        Parse command-line arguments.
+
+        Parameters
+        ----------
+        args : list, optional
+            Arguments to parse (default: sys.argv)
+
+        Returns
+        -------
+        argparse.Namespace
+            Parsed arguments
+        """
+        return self.parser.parse_args(args)
+
+    def create_chart(self, args):
+        """
+        Create a chart from parsed arguments.
+
+        Must be implemented by subclasses.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Parsed arguments
+
+        Returns
+        -------
+        Chart
+            The created chart object
+        """
+        raise NotImplementedError("Subclasses must implement create_chart")
+
+    def run(self, args=None):
+        """
+        Run the CLI: parse args, create and serve the chart.
+
+        Parameters
+        ----------
+        args : list, optional
+            Command-line arguments (default: sys.argv)
+        """
+        parsed_args = self.parse_args(args)
+        chart = self.create_chart(parsed_args)
+
+        # Apply common settings
+        if getattr(parsed_args, "log", False):
+            chart.logarithmic()
+
+        # Serve the chart
+        serve(chart.show())
+
+
+class CSVChartCLI(ChartCLI):
+    """
+    CLI for creating charts from CSV files.
+    """
+
+    def _add_common_arguments(self, parser):
+        """Add CSV-specific and common chart arguments."""
+        super()._add_common_arguments(parser)
+        parser.add_argument("csv_file", help="Path to CSV file")
+        parser.add_argument("-l", "--label_column", help="Column for labels (x-axis)")
+        parser.add_argument("-v", "--value_column", help="Column for values (y-axis)")
+        parser.add_argument("-g", "--group_column", help="Column for grouping data series")
+
+    def create_chart(self, args):
+        """
+        Create a chart from a CSV file based on parsed arguments.
+
+        Parameters
+        ----------
+        args : argparse.Namespace
+            Parsed arguments with csv_file and column information
+
+        Returns
+        -------
+        Chart
+            The created chart object
+        """
+        # Validate CSV file exists
+        if not os.path.exists(args.csv_file):
+            print(f"Error: file not found: {args.csv_file}", file=sys.stderr)
+            sys.exit(1)
+
+        # Read CSV and determine columns
+        with open(args.csv_file, newline="") as f:
+            dicts = list(csv.DictReader(f))
+
+        if not dicts:
+            print(f"Error: CSV file is empty or invalid", file=sys.stderr)
+            sys.exit(1)
+
+        # Pick column names (from args or default to first columns)
+        headers = list(dicts[0].keys())
+        label_col = args.label_column or headers[0]
+        value_col = args.value_column or (headers[1] if len(headers) > 1 else None)
+        group_col = args.group_column or (headers[2] if len(headers) > 2 else None)
+
+        # Create the chart
+        return self.chart_cls(
+            args.csv_file,
+            label_column=label_col,
+            value_column=value_col,
+            group_column=group_col,
+            width=args.width,
+            height=args.height,
+            stacked=args.stacked
+        )
+
