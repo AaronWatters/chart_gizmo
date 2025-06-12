@@ -3,9 +3,10 @@
 Interactive bar charts with state population data.
 """
 
-from chart_gizmo import bars
+from chart_gizmo import lines
+import os
 
-data_path = "./historical_state_population_by_year.csv"
+data_path =  os.path.join(os.path.dirname(__file__), "historical_state_population_by_year.csv")
 
 def load_population_data(path=data_path):
     """
@@ -25,7 +26,9 @@ class PopulationData:
     """
     Class to hold population data.
     """
-    def __init__(self, path=data_path):
+    def __init__(self, path=data_path, chart_class=lines.LineChart):
+        self.chart_class = chart_class
+        self.chart = chart_class()
         self.data = list(load_population_data(path))
         self.years = sorted(set([d["year"] for d in self.data]))
         self.states = sorted(set([d["abbrev"] for d in self.data]))
@@ -48,7 +51,7 @@ class PopulationData:
         if year is None:
             year = self.years[0]
         labels, data = self.data_by_year(year)
-        chart = bars.BarChart()
+        chart = self.chart_class()
         for label in labels:
             chart.add_label(label)
         [title, values] = data
@@ -97,7 +100,7 @@ class PopulationData:
         if state is None:
             state = self.states[0]
         labels, data = self.data_by_state(state)
-        chart = bars.BarChart()
+        chart = self.chart_class()
         for label in labels:
             chart.add_label(label)
         [title, values] = data

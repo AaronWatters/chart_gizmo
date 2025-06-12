@@ -1,0 +1,62 @@
+site_name: Chart Gizmo
+site_url: https://github.com/AaronWatters/chart_gizmo
+repo_url: https://github.com/AaronWatters/chart_gizmo
+repo_name: AaronWatters/chart_gizmo
+site_author: Aaron Watters
+site_description: H5Gizmos Library wrapper for Chart.js
+copyright: Copyright &copy; 2025 Aaron Watters
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: indigo
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.expand
+    - navigation.indexes
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Introduction: introduction.md
+  - Installation: installation.md
+  - API Reference:
+      - Overview: api/index.md
+      - Charts: api/charts.md
+      - Bars: api/bars.md
+      - Lines: api/lines.md
+      - Bubbles: api/bubbles.md
+      - Histogram: api/histogram.md
+      - Pie: api/pie.md
+      - Box Plot: api/boxplot.md
+      - Examples: api/examples.md
+
+  - Command Line Tools:
+      - Overview: cli/index.md
+      - Chart CLI: cli/chartcli.md
+      - Bar Charts: cli/bar.md
+      - Line Charts: cli/line.md
+      - Bubble Charts: cli/bubble.md
+      - Histograms: cli/histogram.md
+      - Pie Charts: cli/pie.md
+      - Box Plots: cli/boxplot.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/AaronWatters
+      name: Aaron Watters on GitHub
