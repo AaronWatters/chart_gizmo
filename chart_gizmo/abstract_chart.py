@@ -7,6 +7,7 @@ from . import data_config
 
 class AbstractChart(raw_chart.RawChart):
     ANIMATION_DEFAULT = False
+    RESPONSIVE_DEFAULT = True
 
     """
     Base class for all chart types (bar, line, etc.).
@@ -19,7 +20,7 @@ class AbstractChart(raw_chart.RawChart):
             height=400,
             stacked=False,
             options=None, title=None,
-            animate=ANIMATION_DEFAULT, **kwargs):
+            animate=ANIMATION_DEFAULT, responsive=RESPONSIVE_DEFAULT, **kwargs):
         super().__init__(configuration, width, height, **kwargs)
         self.configuration = configuration
         # Chart type should be set by subclasses
@@ -34,6 +35,7 @@ class AbstractChart(raw_chart.RawChart):
             options = {}  # Initialize as an empty dictionary if None or invalid
         self.options = options
         self.animate = animate
+        self.responsive = responsive
 
         if title is not None:
             if "plugins" not in self.options:
@@ -49,6 +51,9 @@ class AbstractChart(raw_chart.RawChart):
             # disable animation by default
             if "duration" not in self.options["animation"]:
                 self.options["animation"]["duration"] = 0
+        self.options["responsive"] = responsive
+
+        self.options["maintainAspectRatio"] = responsive
 
     def clear(self):
         """
@@ -124,8 +129,8 @@ class AbstractChart(raw_chart.RawChart):
         Get default options - can be overridden by subclasses.
         """
         return dict(
-            responsive=True,
-            maintainAspectRatio=False,
+            responsive=self.responsive,
+            maintainAspectRatio=True,
             scales=dict(
                 x=dict(
                     stacked=True,
